@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Filter, Sparkles } from "lucide-react";
 import Footer from "../ui/Footer";
+import Header from "../ui/Header";
 
 const tipoOptions = [
     { value: "todos", label: "Aluguel e Venda" },
@@ -83,6 +84,9 @@ export default function CatalogoClient({
 
     return (
         <div className="mx-auto max-w-7xl mt-18 sm:mt-20">
+
+            <Header />
+
             {/* Hero */}
             <section className="py-16 text-center space-y-4">
                 <div className="mx-auto inline-flex items-center justify-center w-14 h-14 rounded-full bg-rose-100">
