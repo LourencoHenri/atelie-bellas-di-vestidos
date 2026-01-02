@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Filter, Sparkles } from "lucide-react";
+
+import { vestidos, categorias } from "@/data/vestidos";
 import Footer from "../ui/Footer";
-import Header from "../ui/Header";
+import { ProductCard } from "../ui/ProductCard";
 
 const tipoOptions = [
     { value: "todos", label: "Aluguel e Venda" },
@@ -18,23 +20,58 @@ const ordenacaoOptions = [
     { value: "preco-maior", label: "Maior Preço" },
 ];
 
-function buildQuery(params: {
-    categoria: string;
-    tipo: string;
-    ordenacao: string;
-}) {
+function buildQuery(params: { categoria: string; tipo: string; ordenacao: string }) {
     const sp = new URLSearchParams();
 
-    if (params.categoria && params.categoria !== "todas")
-        sp.set("categoria", params.categoria);
-
+    if (params.categoria && params.categoria !== "todas") sp.set("categoria", params.categoria);
     if (params.tipo && params.tipo !== "todos") sp.set("tipo", params.tipo);
-
-    if (params.ordenacao && params.ordenacao !== "recentes")
-        sp.set("ordenacao", params.ordenacao);
+    if (params.ordenacao && params.ordenacao !== "recentes") sp.set("ordenacao", params.ordenacao);
 
     const qs = sp.toString();
     return qs ? `?${qs}` : "";
+}
+
+function SelectNative({
+    value,
+    onChange,
+    options,
+    ariaLabel,
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    options: { value: string; label: string }[];
+    ariaLabel: string;
+}) {
+    return (
+        <div className="relative">
+            <select
+                aria-label={ariaLabel}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-full appearance-none rounded-2xl border border-rose-100 bg-white px-4 py-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-tertiary/30"
+            >
+                {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                    </option>
+                ))}
+            </select>
+
+            {/* setinha do select */}
+            <svg
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+            >
+                <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                    clipRule="evenodd"
+                />
+            </svg>
+        </div>
+    );
 }
 
 export default function CatalogoClient({
@@ -62,11 +99,36 @@ export default function CatalogoClient({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
-    const applyFilters = (next: {
-        categoria?: string;
-        tipo?: string;
-        ordenacao?: string;
-    }) => {
+    const vestidosFiltrados = useMemo(() => {
+        let result = [...vestidos];
+
+        // Categoria
+        if (categoria !== "todas") {
+            result = result.filter((v) => v.categoria === categoria);
+        }
+
+        // Tipo
+        if (tipo !== "todos") {
+            result = result.filter((v) => v.tipo === tipo);
+        }
+
+        // Ordenação
+        switch (ordenacao) {
+            case "preco-menor":
+                result.sort((a, b) => a.precoAluguel - b.precoAluguel);
+                break;
+            case "preco-maior":
+                result.sort((a, b) => b.precoAluguel - a.precoAluguel);
+                break;
+            default:
+                // Mais recentes (id desc)
+                result.sort((a, b) => Number(b.id) - Number(a.id));
+        }
+
+        return result;
+    }, [categoria, tipo, ordenacao]);
+
+    const applyFilters = (next: { categoria?: string; tipo?: string; ordenacao?: string }) => {
         const merged = {
             categoria: next.categoria ?? categoria,
             tipo: next.tipo ?? tipo,
@@ -82,10 +144,16 @@ export default function CatalogoClient({
         router.push(`${pathname}${buildQuery(merged)}`, { scroll: false });
     };
 
+    const categoriaOptions = useMemo(
+        () => [
+            { value: "todas", label: "Todas as Ocasiões" },
+            ...categorias.map((cat) => ({ value: cat.id, label: cat.label })),
+        ],
+        []
+    );
+
     return (
         <div className="mx-auto max-w-7xl mt-18 sm:mt-20">
-            <Header />
-
             {/* Hero */}
             <section className="py-16 text-center space-y-4">
                 <div className="mx-auto inline-flex items-center justify-center w-14 h-14 rounded-full bg-rose-100">
@@ -100,8 +168,7 @@ export default function CatalogoClient({
                 </h1>
 
                 <p className="text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                    Encontre o vestido perfeito para tornar o dia da sua pequena ainda mais
-                    especial.
+                    Encontre o vestido perfeito para tornar o dia da sua pequena ainda mais especial.
                 </p>
             </section>
 
@@ -112,9 +179,7 @@ export default function CatalogoClient({
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Filter className="w-4 h-4" />
                             <span>Filtros</span>
-                            <span className="text-tertiary font-semibold">
-                                vestidos
-                            </span>
+                            <span className="text-tertiary font-semibold">{vestidosFiltrados.length} vestidos</span>
                         </div>
 
                         <div className="flex-1" />
@@ -123,19 +188,34 @@ export default function CatalogoClient({
                             {/* Categoria */}
                             <div className="text-sm">
                                 <span className="sr-only">Categoria</span>
-
+                                <SelectNative
+                                    ariaLabel="Categoria"
+                                    value={categoria}
+                                    onChange={(value) => applyFilters({ categoria: value })}
+                                    options={categoriaOptions}
+                                />
                             </div>
 
                             {/* Tipo */}
                             <div className="text-sm">
                                 <span className="sr-only">Tipo</span>
-
+                                <SelectNative
+                                    ariaLabel="Tipo"
+                                    value={tipo}
+                                    onChange={(value) => applyFilters({ tipo: value })}
+                                    options={tipoOptions}
+                                />
                             </div>
 
                             {/* Ordenação */}
                             <div className="text-sm">
                                 <span className="sr-only">Ordenação</span>
-
+                                <SelectNative
+                                    ariaLabel="Ordenação"
+                                    value={ordenacao}
+                                    onChange={(value) => applyFilters({ ordenacao: value })}
+                                    options={ordenacaoOptions}
+                                />
                             </div>
                         </div>
                     </div>
@@ -144,7 +224,19 @@ export default function CatalogoClient({
 
             {/* Grid */}
             <section className="py-6 px-4 sm:px-6 lg:px-8">
-
+                {vestidosFiltrados.length > 0 ? (
+                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        {vestidosFiltrados.map((vestido) => (
+                            <ProductCard key={vestido.id} vestido={vestido} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16">
+                        <p className="text-muted-foreground">
+                            Nenhum vestido encontrado com os filtros selecionados.
+                        </p>
+                    </div>
+                )}
             </section>
 
             <Footer />
