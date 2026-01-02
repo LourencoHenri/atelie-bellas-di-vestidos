@@ -84,7 +84,6 @@ export default function CatalogoClient({
 
     return (
         <div className="mx-auto max-w-7xl mt-18 sm:mt-20">
-
             <Header />
 
             {/* Hero */}
