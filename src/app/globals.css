@@ -1,8 +1,37 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #FACAE1;
+  --color-secondary: #ECA3C5;
+  --color-tertiary: #DF679F;
+  --color-quaternary: #C76C97;
+  --color-dark: #563501;
+
+  --color-background-pink: #F8E6EE;
+
+  /* TEXT */
+  --color-text-primary: #936C79;
+  --color-text-dark: #42242E;
+  --color-text-secondary: #D1477A;
+  /* GRADIENT TEXT */
+  --color-text-gradient-start: #d1477a;
+  --color-text-gradient-end: #e085a6;
+}
+
+.font-playfair {
+  font-family: var(--font-playfair), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.font-inter {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --text-primary: #936C79;
+  --text-dark: #42242E;
 }
 
 @theme inline {
@@ -12,15 +41,17 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+h1,
+h2,
+h3,
+h5,
+h6 {
+  font-family: var(--font-playfair);
+  color: var(--text-dark);
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-inter);
 }
